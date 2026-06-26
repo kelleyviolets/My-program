@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="My Program">
+<title>My Program</title>
+<style>
+  :root {
+    --sage: #7C9A7E;
+    --sage-light: #EEF3EE;
+    --sage-mid: #C4D4C5;
+    --warm: #C17F5A;
+    --warm-light: #FAF0E8;
+    --warm-mid: #E8C4A8;
+    --stone: #8A8580;
+    --stone-light: #F5F4F2;
+    --stone-mid: #D4D2CE;
+    --text: #2C2A27;
+    --text-2: #6B6860;
+    --text-3: #9B9890;
+    --border: #E8E6E2;
+    --surface: #FFFFFF;
+    --bg: #FAF9F7;
+    --radius: 14px;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  
+  /* NAV */
+  .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(250,249,247,0.92); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); padding: 12px 16px 10px; display: flex; align-items: center; gap: 10px; }
+  .nav-back { display: none; background: none; border: none; font-size: 16px; color: var(--sage); cursor: pointer; padding: 4px 0; font-family: inherit; }
+  .nav-title { font-size: 17px; font-weight: 600; color: var(--text); flex: 1; }
+  .nav-sub { font-size: 13px; color: var(--text-3); }
+
+  /* SCREENS */
+  .screen { display: none; padding: 72px 16px calc(24px + var(--safe-bottom)); min-height: 100vh; }
+  .screen.active { display: block; }
+
+  /* DASHBOARD */
+  .greeting { margin-bottom: 20px; }
+  .greeting-name { font-size: 26px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; }
+  .greeting-sub { font-size: 15px; color: var(--text-2); margin-top: 3px; line-height: 1.4; }
+
+  .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 10px; text-align: center; }
+  .stat-val { font-size: 22px; font-weight: 700; color: var(--text); }
+  .stat-label { font-size: 11px; color: var(--text-3); margin-top: 2px; line-height: 1.3; }
+
+  .section-label { font-size: 12px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; margin-top: 20px; }
+
+  .module-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .module-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 14px; cursor: pointer; transition: transform 0.1s; active-transform: scale(0.97); position: relative; overflow: hidden; }
+  .module-card:active { transform: scale(0.97); }
+  .module-card.highlight { border-color: var(--warm-mid); background: var(--warm-light); }
+  .module-card.full { grid-column: 1 / -1; }
+  .module-icon { font-size: 24px; margin-bottom: 8px; }
+  .module-name { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+  .module-desc { font-size: 12px; color: var(--text-2); line-height: 1.4; }
+  .module-badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px; background: var(--warm); color: white; margin-bottom: 6px; }
+
+  /* CONTENT SCREENS */
+  .content-block { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+  .content-block h3 { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+  .content-block p { font-size: 14px; color: var(--text-2); line-height: 1.6; margin-bottom: 8px; }
+  .content-block p:last-child { margin-bottom: 0; }
+  .content-block ul { padding-left: 16px; }
+  .content-block ul li { font-size: 14px; color: var(--text-2); line-height: 1.6; margin-bottom: 4px; }
+
+  .phase-tabs { display: flex; gap: 6px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+  .phase-tabs::-webkit-scrollbar { display: none; }
+  .phase-tab { flex-shrink: 0; padding: 7px 14px; border-radius: 20px; border: 1px solid var(--border); background: var(--surface); font-size: 13px; color: var(--text-2); cursor: pointer; font-family: inherit; transition: all 0.15s; }
+  .phase-tab.active { background: var(--sage); border-color: var(--sage); color: white; font-weight: 500; }
+
+  .phase-content { display: none; }
+  .phase-content.active { display: block; }
+
+  .goal-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .goal-row:last-child { border-bottom: none; }
+  .goal-label { font-size: 14px; color: var(--text-2); }
+  .goal-val { font-size: 14px; font-weight: 600; color: var(--text); }
+
+  .prompt-box { background: var(--sage-light); border-left: 3px solid var(--sage); border-radius: 0 8px 8px 0; padding: 12px 14px; margin: 8px 0; font-size: 14px; color: var(--text); line-height: 1.6; font-style: italic; }
+
+  .warning-box { background: #FEF9EC; border: 1px solid #F0D070; border-radius: var(--radius); padding: 14px; margin-bottom: 12px; }
+  .warning-box p { font-size: 13px; color: #7A6020; line-height: 1.5; margin: 0; }
+
+  .ritual-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .ritual-item { background: var(--stone-light); border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+  .ritual-item strong { display: block; font-size: 13px; color: var(--text); margin-bottom: 3px; }
+  .ritual-item span { font-size: 12px; color: var(--text-2); line-height: 1.4; }
+
+  .week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin: 10px 0; }
+  .day-cell { text-align: center; padding: 8px 2px; border-radius: 8px; }
+  .day-cell .dn { font-size: 10px; color: var(--text-3); margin-bottom: 3px; }
+  .day-cell .dv { font-size: 14px; font-weight: 700; }
+  .day-free { background: #EEF7EE; } .day-free .dv { color: #4A8A4A; }
+  .day-drink { background: #EEF0FA; } .day-drink .dv { color: #4A5AAA; }
+
+  /* IFS SPECIFIC */
+  .ifs-card { background: linear-gradient(135deg, #F0EEF8, #EEF3EE); border: 1px solid #C8C0E0; border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+  .ifs-card h3 { font-size: 15px; font-weight: 600; color: #3C2A6A; margin-bottom: 8px; }
+  .ifs-card p { font-size: 14px; color: #5A4A7A; line-height: 1.6; margin-bottom: 8px; }
+  .ifs-card p:last-child { margin-bottom: 0; }
+  .part-card { background: var(--surface); border: 1px solid #C8C0E0; border-radius: 10px; padding: 14px; margin-bottom: 8px; }
+  .part-role { font-size: 11px; font-weight: 600; color: #8A7AAA; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 3px; }
+  .part-name { font-size: 15px; font-weight: 600; color: #3C2A6A; margin-bottom: 5px; }
+  .part-body { font-size: 13px; color: var(--text-2); line-height: 1.5; }
+
+  /* CHECKIN */
+  .checkin-form { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+  .checkin-form label { display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px; margin-top: 14px; }
+  .checkin-form label:first-child { margin-top: 0; }
+  .checkin-form input, .checkin-form textarea, .checkin-form select { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 14px; font-family: inherit; color: var(--text); background: var(--bg); }
+  .checkin-form textarea { height: 80px; resize: none; }
+
+  .range-row { display: flex; align-items: center; gap: 10px; }
+  .range-row input[type=range] { flex: 1; }
+  .range-val { font-size: 15px; font-weight: 700; color: var(--sage); min-width: 24px; text-align: right; }
+
+  /* WORKOUT */
+  .exercise-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; }
+  .ex-name { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+  .ex-sets { font-size: 13px; color: var(--sage); font-weight: 500; margin-bottom: 5px; }
+  .ex-note { font-size: 12px; color: var(--text-2); line-height: 1.5; }
+  .ex-mod { font-size: 12px; color: var(--warm); margin-top: 4px; }
+
+  /* NUTRITION */
+  .macro-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .macro-label { font-size: 13px; color: var(--text-2); width: 80px; flex-shrink: 0; }
+  .bar-track { flex: 1; height: 8px; background: var(--stone-light); border-radius: 4px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; }
+  .macro-val { font-size: 13px; font-weight: 600; color: var(--text); width: 50px; text-align: right; }
+
+  /* BUTTONS */
+  .btn { display: block; width: 100%; padding: 14px; border-radius: var(--radius); border: none; font-size: 15px; font-weight: 600; font-family: inherit; cursor: pointer; text-align: center; margin-top: 12px; transition: transform 0.1s; }
+  .btn:active { transform: scale(0.98); }
+  .btn-sage { background: var(--sage); color: white; }
+  .btn-warm { background: var(--warm); color: white; }
+  .btn-outline { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
+  .btn-small { display: inline-block; width: auto; padding: 8px 16px; font-size: 13px; margin-top: 8px; }
+
+  .link-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+  .link-row:last-child { border-bottom: none; }
+  .link-row span { font-size: 14px; color: var(--text); }
+  .link-arrow { font-size: 16px; color: var(--text-3); }
+
+  .tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 20px; margin-right: 4px; margin-bottom: 4px; }
+  .tag-sage { background: var(--sage-light); color: var(--sage); }
+  .tag-warm { background: var(--warm-light); color: var(--warm); }
+
+  .insight-box { background: var(--sage-light); border-radius: var(--radius); padding: 14px; margin-bottom: 12px; }
+  .insight-box p { font-size: 14px; color: #3A5A3C; line-height: 1.6; margin: 0; }
+
+  .recipe-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; }
+  .recipe-name { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .recipe-meta { font-size: 12px; color: var(--text-3); margin-bottom: 8px; }
+  .recipe-body { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+
+  .doctor-q { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 8px; }
+  .doctor-q-text { font-size: 14px; color: var(--text); line-height: 1.5; font-weight: 500; margin-bottom: 4px; }
+  .doctor-q-why { font-size: 12px; color: var(--text-2); line-height: 1.4; }
+
+  .science-section { margin-bottom: 20px; }
+  .science-section h3 { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 10px; padding-bottom: 6px; border-bottom: 2px solid var(--sage-mid); }
+
+  .connection-pill { display: inline-flex; align-items: center; gap: 6px; background: var(--warm-light); border: 1px solid var(--warm-mid); border-radius: 20px; padding: 6px 12px; font-size: 12px; color: var(--warm); font-weight: 500; cursor: pointer; margin: 4px 4px 4px 0; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<div class="nav">
+  <button class="nav-back" id="navBack" onclick="goBack()">← Back</button>
+  <div>
+    <div class="nav-title" id="navTitle">My Program</div>
+    <div class="nav-sub" id="navSub">Late perimenopause</div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="screen active" id="screen-home">
+  <div class="greeting">
+    <div class="greeting-name">Your program</div>
+    <div class="greeting-sub">Late perimenopause · Weight & metabolism priority</div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-val" id="stat-drinks">—</div>
+      <div class="stat-label">Drinks this week</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="stat-workouts">—</div>
+      <div class="stat-label">Workouts done</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="stat-protein">—</div>
+      <div class="stat-label">Protein avg (g)</div>
+    </div>
+  </div>
+
+  <div class="section-label">Start here</div>
+  <div class="module-grid">
+    <div class="module-card highlight full" onclick="goto('alcohol')">
+      <div class="module-badge">Highest leverage</div>
+      <div class="module-name">🍷 Alcohol reduction + IFS</div>
+      <div class="module-desc">Daily wine → 1–2/week. Includes parts inquiry and phase plan.</div>
+    </div>
+  </div>
+
+  <div class="section-label">Your plan</div>
+  <div class="module-grid">
+    <div class="module-card" onclick="goto('nutrition')">
+      <div class="module-icon">🥩</div>
+      <div class="module-name">Nutrition</div>
+      <div class="module-desc">Protein targets, meal framework, high-protein recipes.</div>
+    </div>
+    <div class="module-card" onclick="goto('strength')">
+      <div class="module-icon">💪</div>
+      <div class="module-name">Strength</div>
+      <div class="module-desc">3-day home program, hip-safe, dumbbells only.</div>
+    </div>
+    <div class="module-card" onclick="goto('science')">
+      <div class="module-icon">🔬</div>
+      <div class="module-name">The science</div>
+      <div class="module-desc">Why weight gain happens. What actually moves the needle.</div>
+    </div>
+    <div class="module-card" onclick="goto('doctor')">
+      <div class="module-icon">🩺</div>
+      <div class="module-name">Doctor prep</div>
+      <div class="module-desc">Questions for your GP on weight, HRT, and labs.</div>
+    </div>
+  </div>
+
+  <div class="section-label">Track & reflect</div>
+  <div class="module-grid">
+    <div class="module-card full" onclick="goto('checkin')">
+      <div class="module-icon">✅</div>
+      <div class="module-name">Weekly check-in</div>
+      <div class="module-desc">Drinks, workouts, protein, sleep, IFS reflection. Under 5 minutes.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ALCOHOL + IFS -->
+<div class="screen" id="screen-alcohol">
+  <div class="phase-tabs">
+    <button class="phase-tab active" onclick="showPhase('alcohol','ifs')">Parts map</button>
+    <button class="phase-tab" onclick="showPhase('alcohol','p1')">Phase 1</button>
+    <button class="phase-tab" onclick="showPhase('alcohol','p2')">Phase 2</button>
+    <button class="phase-tab" onclick="showPhase('alcohol','p3')">Phase 3</button>
+    <button class="phase-tab" onclick="showPhase('alcohol','hard')">When hard</button>
+  </div>
+
+  <div class="phase-content active" data-screen="alcohol" data-phase="ifs">
+    <div class="ifs-card">
+      <h3>Your drinking part</h3>
+      <p>The drinking part isn't the problem — it's a protector doing a real job. What came up in your inquiry:</p>
+    </div>
+    <div class="part-card">
+      <div class="part-role">What the bee wanted</div>
+      <div class="part-name">Move freely, lightly — run, dance</div>
+      <div class="part-body">The bee in the bottle isn't dangerous. It's vitality that wants out. The drinking part has been sedating aliveness, not chaos.</div>
+    </div>
+    <div class="part-card">
+      <div class="part-role">The exile underneath</div>
+      <div class="part-name">Shame and restlessness about the gap</div>
+      <div class="part-body">A feeling of responsibility for the distance between who you are when moving freely and who you have to be most of the time. The verdict: laziness, fear. The drinking part protects you from sitting with that verdict every evening.</div>
+    </div>
+    <div class="part-card">
+      <div class="part-role">What the part most needed to hear</div>
+      <div class="part-name">It won't have to hold this alone</div>
+      <div class="part-body">The drinking part has been managing this in complete isolation. The core need isn't wine — it's not being alone with the restlessness and shame. That changes now.</div>
+    </div>
+    <div class="ifs-card">
+      <h3>The IFS frame for reduction</h3>
+      <p>You're not fighting the drinking part. You're building a relationship with it — appreciating what it's been doing, and offering it an alternative. Reduction happens through that relationship, not despite it.</p>
+      <p>Your movement work (strength, walking) is part of this. Every session is a small act of letting the bee out.</p>
+    </div>
+    <div class="connection-pill" onclick="goto('strength')">↗ Go to strength program</div>
+    <div class="connection-pill" onclick="goto('checkin')">↗ Weekly IFS check-in</div>
+  </div>
+
+  <div class="phase-content" data-screen="alcohol" data-phase="p1">
+    <div class="warning-box"><p><strong>If you drink 3+ glasses nightly:</strong> physical withdrawal is real. Talk to your doctor before a sharp cut. Tapering is safer than stopping cold.</p></div>
+    <div class="content-block">
+      <h3>Phase 1 targets · Weeks 1–2</h3>
+      <div class="goal-row"><span class="goal-label">Reduce by</span><span class="goal-val">2 drinks from baseline</span></div>
+      <div class="goal-row"><span class="goal-label">Alcohol-free days</span><span class="goal-val">2 (non-consecutive)</span></div>
+      <div class="goal-row"><span class="goal-label">Daily IFS check-in</span><span class="goal-val">4:30pm, before craving peaks</span></div>
+    </div>
+    <div class="content-block">
+      <h3>The 4:30pm practice</h3>
+      <p>Before you'd normally pour, pause 2–3 minutes. Not to stop yourself — just to check in with the part.</p>
+      <div class="prompt-box">"Hey, I notice you're showing up. What are you carrying right now?"</div>
+      <div class="prompt-box">"What happened today that you're protecting me from?"</div>
+      <div class="prompt-box">"What do you actually need right now — underneath the wine?"</div>
+      <p style="margin-top:10px">After the inquiry: offer the part something real. Movement, a bath, deliberate stillness. The replacement has to address what the part actually said it needed.</p>
+    </div>
+    <div class="content-block">
+      <h3>Replacement rituals</h3>
+      <div class="ritual-grid">
+        <div class="ritual-item"><strong>Movement (best fit)</strong><span>10-min walk or movement at 4:30pm. Directly answers what the bee asked for.</span></div>
+        <div class="ritual-item"><strong>Temperature shift</strong><span>Hot shower or bath. Drops core temp after, mimics alcohol's physical relaxation.</span></div>
+        <div class="ritual-item"><strong>Non-alcohol ritual</strong><span>Same glass, same chair, same time. Sparkling water, bitters, fancy mocktail. The vessel matters.</span></div>
+        <div class="ritual-item"><strong>Hard stop</strong><span>Something that needs mild attention — a puzzle, a show you only watch then, a short read.</span></div>
+      </div>
+    </div>
+    <div class="connection-pill" onclick="goto('checkin')">↗ Do Phase 1 check-in</div>
+  </div>
+
+  <div class="phase-content" data-screen="alcohol" data-phase="p2">
+    <div class="content-block">
+      <h3>Phase 2 targets · Weeks 3–4</h3>
+      <div class="goal-row"><span class="goal-label">Drinks per week</span><span class="goal-val">4–5 max</span></div>
+      <div class="goal-row"><span class="goal-label">Alcohol-free days</span><span class="goal-val">4 minimum</span></div>
+      <div class="goal-row"><span class="goal-label">Drinking days</span><span class="goal-val">Chosen in advance</span></div>
+    </div>
+    <div class="content-block">
+      <h3>Sample week</h3>
+      <div class="week-grid">
+        <div class="day-cell day-free"><div class="dn">Mon</div><div class="dv">0</div></div>
+        <div class="day-cell day-free"><div class="dn">Tue</div><div class="dv">0</div></div>
+        <div class="day-cell day-drink"><div class="dn">Wed</div><div class="dv">1</div></div>
+        <div class="day-cell day-free"><div class="dn">Thu</div><div class="dv">0</div></div>
+        <div class="day-cell day-drink"><div class="dn">Fri</div><div class="dv">2</div></div>
+        <div class="day-cell day-drink"><div class="dn">Sat</div><div class="dv">1</div></div>
+        <div class="day-cell day-free"><div class="dn">Sun</div><div class="dv">0</div></div>
+      </div>
+      <p style="font-size:13px;color:var(--text-2);margin-top:8px">Decide your drinking days at the start of the week — not in the moment. In-the-moment decisions almost always go the wrong way.</p>
+    </div>
+    <div class="ifs-card">
+      <h3>Deepening the inquiry</h3>
+      <p>On one alcohol-free evening this phase, do a longer sit with the part:</p>
+      <div class="prompt-box">"What have you been doing for me all these years?"</div>
+      <div class="prompt-box">"What are you most afraid would happen if you stopped?"</div>
+      <div class="prompt-box">"Is there a part of you that would actually like to rest?"</div>
+    </div>
+    <div class="insight-box"><p>Sleep will start improving noticeably around day 10–14. Hot flashes may decrease. Weight change at this stage is mostly water — real metabolic change comes in Phase 3.</p></div>
+  </div>
+
+  <div class="phase-content" data-screen="alcohol" data-phase="p3">
+    <div class="content-block">
+      <h3>Phase 3 targets · Weeks 5–8</h3>
+      <div class="goal-row"><span class="goal-label">Drinks per week</span><span class="goal-val">1–2, chosen in advance</span></div>
+      <div class="goal-row"><span class="goal-label">Alcohol-free days</span><span class="goal-val">5–6 days</span></div>
+      <div class="goal-row"><span class="goal-label">Decompression ritual</span><span class="goal-val">Automatic most nights</span></div>
+    </div>
+    <div class="ifs-card">
+      <h3>Unburdening work</h3>
+      <p>If you've identified the exile — the restless part, the gap, the shame — this is the phase to bring direct care to it. What does it need you to know? What has it been holding that it's never been able to put down? You don't need to resolve it fully. Just witnessing it changes things.</p>
+    </div>
+    <div class="content-block">
+      <h3>What changes by week 6–8</h3>
+      <p>Sleep quality measurably better. Hot flashes reduce. Cortisol patterns normalize — directly affecting belly fat. Mood more stable. Weight loss, if it happens, accelerates. You may notice wine hits harder and faster — tolerance drops quickly.</p>
+    </div>
+    <div class="content-block">
+      <h3>The drift pattern to watch</h3>
+      <p>The drinking part doesn't relapse dramatically — it negotiates quietly back in. "Just this week, it's been hard." Notice it with curiosity, not judgment. Ask: "What happened this week that brought you back?" The answer tells you what still needs tending.</p>
+      <p style="margin-top:8px">Build this rule now: if you go over your weekly limit, the following week is zero drinks. Prevents gradual drift.</p>
+    </div>
+  </div>
+
+  <div class="phase-content" data-screen="alcohol" data-phase="hard">
+    <div class="content-block">
+      <h3>High-stress day</h3>
+      <p>The decompression manager is activated hard. Don't fight it — ask it what's happening. "I see you. What went wrong today?" Plan your 4:30pm replacement the night before hard days. Don't problem-solve in the moment.</p>
+    </div>
+    <div class="content-block">
+      <h3>The exile surfaces anyway</h3>
+      <p>Reducing alcohol means what it was suppressing comes up more directly — more anxiety, restlessness, sadness at night. That's not failure. That's the exile getting air. Bring Self energy to it. "I see you. I'm here. You don't have to stay buried."</p>
+    </div>
+    <div class="content-block">
+      <h3>You slipped</h3>
+      <p>Don't exile the drinking part for it. Get curious: "You came back. What was too much tonight?" One night over your limit isn't failure — it's information. The next day is day one again.</p>
+    </div>
+    <div class="content-block">
+      <h3>Can't sleep</h3>
+      <p>Real initially — sleep gets worse before it gets better around days 3–7. Magnesium glycinate 200–400mg before bed genuinely helps. 0.5mg melatonin (low dose) can bridge the first week. What part is awake at 2am? A brief inquiry often helps more than fighting it.</p>
+    </div>
+    <div class="content-block">
+      <h3>The critical voice ("not very good, can't do many things")</h3>
+      <p>This manager jumps in fast to protect you from attempting freedom and failing. You don't need to argue with it. Notice it, thank it for trying to protect you, and gently return to the part that said yes to trying a different way.</p>
+    </div>
+  </div>
+</div>
+
+<!-- NUTRITION -->
+<div class="screen" id="screen-nutrition">
+  <div class="insight-box"><p>Your target: <strong>100–130g protein/day</strong>. You're getting 60–90g inconsistently. The gap is mostly breakfast and lunch — dinner is usually fine. Close the gap there first.</p></div>
+
+  <div class="phase-tabs">
+    <button class="phase-tab active" onclick="showPhase('nutrition','framework')">Framework</button>
+    <button class="phase-tab" onclick="showPhase('nutrition','meals')">Meal plan</button>
+    <button class="phase-tab" onclick="showPhase('nutrition','recipes')">Recipes</button>
+    <button class="phase-tab" onclick="showPhase('nutrition','why')">Why it matters</button>
+  </div>
+
+  <div class="phase-content active" data-screen="nutrition" data-phase="framework">
+    <div class="content-block">
+      <h3>Your protein targets</h3>
+      <div class="goal-row"><span class="goal-label">Daily target</span><span class="goal-val">100–130g</span></div>
+      <div class="goal-row"><span class="goal-label">Per meal (3 meals)</span><span class="goal-val">30–40g each</span></div>
+      <div class="goal-row"><span class="goal-label">Minimum per meal</span><span class="goal-val">25g to trigger muscle synthesis</span></div>
+      <div class="goal-row"><span class="goal-label">Body weight ratio</span><span class="goal-val">0.7–1g per lb of body weight</span></div>
+    </div>
+    <div class="content-block">
+      <h3>The perimenopause nutrition shift</h3>
+      <p>Three things matter most right now, in order:</p>
+      <ul>
+        <li><strong>Protein first</strong> — protects muscle mass as estrogen drops. Muscle is your metabolic engine.</li>
+        <li><strong>Blood sugar stability</strong> — lower estrogen = less insulin sensitivity. Protein + fat before carbs at every meal.</li>
+        <li><strong>Reducing alcohol</strong> — directly connected. Alcohol raises cortisol, disrupts sleep, and blocks fat metabolism. This is your highest leverage nutrition change.</li>
+      </ul>
+    </div>
+    <div class="content-block">
+      <h3>What to prioritize</h3>
+      <div class="goal-row"><span class="goal-label">Breakfast</span><span class="goal-val">30g protein minimum</span></div>
+      <div class="goal-row"><span class="goal-label">Lunch</span><span class="goal-val">30g protein minimum</span></div>
+      <div class="goal-row"><span class="goal-label">Dinner</span><span class="goal-val">Already working — maintain</span></div>
+      <div class="goal-row"><span class="goal-label">Carbs</span><span class="goal-label">After protein and fat, not before</span></div>
+      <div class="goal-row"><span class="goal-label">Eating window</span><span class="goal-val">12hr or less where possible</span></div>
+    </div>
+    <div class="connection-pill" onclick="goto('science')">↗ Why protein matters in perimenopause</div>
+  </div>
+
+  <div class="phase-content" data-screen="nutrition" data-phase="meals">
+    <div class="content-block">
+      <h3>Sample high-protein day</h3>
+      <div class="goal-row"><span class="goal-label">Breakfast</span><span class="goal-val">~35g protein</span></div>
+      <p style="font-size:13px;color:var(--text-2);padding:6px 0 10px">3-egg omelette with cottage cheese (150g) + smoked salmon. Or Greek yogurt (200g) with protein powder and berries.</p>
+      <div class="goal-row"><span class="goal-label">Lunch</span><span class="goal-val">~35g protein</span></div>
+      <p style="font-size:13px;color:var(--text-2);padding:6px 0 10px">Large salad with 150g grilled chicken or tinned tuna, olive oil, avocado, lots of veg.</p>
+      <div class="goal-row"><span class="goal-label">Dinner</span><span class="goal-val">~40g protein</span></div>
+      <p style="font-size:13px;color:var(--text-2);padding:6px 0 10px">Salmon or lean beef (180g) with roasted vegetables and a small amount of rice or sweet potato.</p>
+      <div class="goal-row"><span class="goal-label">Snack (if needed)</span><span class="goal-val">~15g protein</span></div>
+      <p style="font-size:13px;color:var(--text-2);padding:6px 0">Hard boiled eggs, cottage cheese, edamame, or a protein shake.</p>
+    </div>
+    <div class="content-block">
+      <h3>Fast wins this week</h3>
+      <ul>
+        <li>Add cottage cheese or Greek yogurt to breakfast every day</li>
+        <li>Keep tinned fish (tuna, salmon, sardines) for fast high-protein lunches</li>
+        <li>Batch cook one protein source on Sunday (chicken thighs, hard-boiled eggs)</li>
+        <li>Eat protein within 30–60 min of waking</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="phase-content" data-screen="nutrition" data-phase="recipes">
+    <div class="recipe-card">
+      <div class="recipe-name">Greek yogurt power bowl</div>
+      <div class="recipe-meta">5 min · ~35g protein · Breakfast</div>
+      <div class="recipe-body">200g full-fat Greek yogurt + 1 scoop vanilla protein powder + handful frozen berries (microwaved 60 sec) + 1 tbsp almond butter + handful of walnuts. Mix and eat.</div>
+    </div>
+    <div class="recipe-card">
+      <div class="recipe-name">Cottage cheese omelette</div>
+      <div class="recipe-meta">10 min · ~38g protein · Breakfast or lunch</div>
+      <div class="recipe-body">3 eggs beaten with 100g cottage cheese, poured into a hot pan with butter. Add whatever veg you have (spinach, peppers, mushrooms). Fold when almost set. The cottage cheese makes it creamy and adds protein without effort.</div>
+    </div>
+    <div class="recipe-card">
+      <div class="recipe-name">Salmon sheet pan</div>
+      <div class="recipe-meta">25 min · ~45g protein · Dinner</div>
+      <div class="recipe-body">180g salmon fillet + chopped broccoli, zucchini, and cherry tomatoes on a baking sheet. Drizzle olive oil, salt, garlic, lemon. Roast 220°C for 18–20 min. One pan, no fuss.</div>
+    </div>
+    <div class="recipe-card">
+      <div class="recipe-name">Tuna white bean salad</div>
+      <div class="recipe-meta">5 min · ~40g protein · Lunch</div>
+      <div class="recipe-body">2 tins good tuna (drained) + 1 tin white beans (drained) + cucumber, cherry tomatoes, red onion, capers. Dress with olive oil, red wine vinegar, Dijon, salt. Keeps 2 days in the fridge.</div>
+    </div>
+    <div class="recipe-card">
+      <div class="recipe-name">High-protein snack plate</div>
+      <div class="recipe-meta">2 min · ~25g protein · Snack</div>
+      <div class="recipe-body">2 hard boiled eggs + 100g cottage cheese + cucumber slices + a few olives. Prep eggs in batches Sunday night — grab and go all week.</div>
+    </div>
+  </div>
+
+  <div class="phase-content" data-screen="nutrition" data-phase="why">
+    <div class="content-block">
+      <h3>Why you're gaining weight despite no major changes</h3>
+      <p>Estrogen has a direct protective effect on body composition. As it drops in perimenopause, fat redistribution shifts toward the abdomen — this is hormonally driven, not a diet failure.</p>
+      <p>Meanwhile, muscle mass starts declining faster (sarcopenia accelerates post-40). Less muscle means lower resting metabolism — so you burn fewer calories doing the same things.</p>
+      <p>Alcohol amplifies both: it raises cortisol (which deposits fat abdominally), disrupts sleep (which disrupts hunger hormones leptin and ghrelin), and provides empty calories that displace protein.</p>
+    </div>
+    <div class="content-block">
+      <h3>What actually moves the needle</h3>
+      <ul>
+        <li>Protein at every meal — protects muscle mass, most important single change</li>
+        <li>Strength training — the only way to build back metabolic tissue</li>
+        <li>Reducing alcohol — removes cortisol driver and sleep disruption</li>
+        <li>Sleep quality — hunger hormones normalize with better sleep</li>
+        <li>Eating window — 12hr or less supports insulin sensitivity</li>
+      </ul>
+    </div>
+    <div class="connection-pill" onclick="goto('alcohol')">↗ Alcohol reduction plan</div>
+    <div class="connection-pill" onclick="goto('strength')">↗ Strength program</div>
+  </div>
+</div>
+
+<!-- STRENGTH -->
+<div class="screen" id="screen-strength">
+  <div class="insight-box"><p>3 days/week · Dumbbells only · 20–30 min · Hip labrum safe. No deep hip flexion, no single-leg loading without support, no high impact.</p></div>
+
+  <div class="phase-tabs">
+    <button class="phase-tab active" onclick="showPhase('strength','a')">Day A</button>
+    <button class="phase-tab" onclick="showPhase('strength','b')">Day B</button>
+    <button class="phase-tab" onclick="showPhase('strength','c')">Day C</button>
+    <button class="phase-tab" onclick="showPhase('strength','notes')">Notes</button>
+  </div>
+
+  <div class="phase-content active" data-screen="strength" data-phase="a">
+    <div class="content-block" style="margin-bottom:8px"><h3>Day A — Upper push + core</h3><p style="font-size:13px">Monday or equivalent. Rest at least one day before Day B.</p></div>
+    <div class="exercise-card">
+      <div class="ex-name">Dumbbell chest press</div>
+      <div class="ex-sets">3 sets × 10–12 reps</div>
+      <div class="ex-note">Lying on floor or bench. Lower slowly (3 counts), press up (1 count). Control matters more than weight.</div>
+    </div>
+    <div class="exercise-card">
+      <div class="ex-name">Seated dumbbell shoulder press</div>
+      <div class="ex-sets">3 sets × 10–12 reps</div>
+      <div class="ex-note">Sit on a sturdy chair. Press overhead without arching the lower back.</div>
+    </div>
+    <div class="exercise-card">
+      <div class="ex-name">Dumbbell tricep overhead extension</div>
+      <div class="ex-sets">2 sets × 12 reps</div>
+      <div class="ex-note">Hold one dumbbell with both hands overhead. Lower behind head slowly.</div>
+    </div>
+    <div class="exercise-card">
+      <div class="ex-name">Dead bug</div>
+      <div class="ex-sets">3 sets × 8 reps each side</div>
+      <div class="ex-note">Lying on back, arms up, knees at 90°. Slowly lower opposite arm and leg. Lower back stays pressed to floor the whole time.</div>
+      <div class="ex-mod">🦋 Hip-safe core — no crunches, no sit-ups</div>
+    </div>
+    <div class="exercise-card">
+      <div class="ex-name">Bird dog</div>
+      <div class="ex-sets">3 sets × 8 reps each side</div>
+      <div class="ex-note">On hands and knees. Extend opposite arm and leg, hold 2 seconds. Spine stays neutral throughout.</div>
+      <div class="ex-mod">🦋 Also great for lower back support</div>
+    </div>
+  </div>
+
+  <div class="phase-content" data-screen="strength" data-phase="b">
+    <div class="content-block" style="margin-bottom:8px"><h3>Day B — Lower body (hip-safe)</h3><p style="font-size:13px">Wednesday or equivalent. All movements modified to protect the right hip labrum.</p></div>
+    <div class="exercise-card">
+      <div class="ex-name">Glute bridge</div>
+      <div class="ex-sets">3 sets × 15 reps</div>
+      <div class="ex-note">Lying on back, feet flat, hip-width apart. Drive hips up by squeezing glutes. Hold 2 seconds at top. Add a dumbbell across hips to progress.</div>
+      <div class="ex-mod">🦋 Primary glute builder — zero hip labrum stress</div>
+    </div>
+    <div class="exercise-card">
+      <div class="ex-name">Goblet squat (shallow range)</div>
+      <div class="ex-sets">3 sets × 10 reps</div>
+      <div class="ex-note">Hold one dumbbell at chest. Squat to where you feel comfortable — do not push past pain. Feet slightly wider than hips, toes turned out slightly.</div>
+      <div class="ex-mod">🦋 Only go as deep as pain-free. Shallow is fine.</div>
+    </div>
+    <div class="exercise-card">
+      <div class="ex-name">Side-lying clamshell</div>
+      <div class="ex-sets">3 sets × 15 reps each side</div>
+      <div class="ex-note">Lie on your side, knees bent at 45°. Keeping feet together, lift top knee like a clamshell opening. Squeeze at top.</div>
+      <div class="ex-mod">🦋 Hip stabilizer — key for labrum support</div>
+    </div>
+    <div class="exercise-card">
+      <div class="ex-name">Standing hip abduction (with support)</div>
+      <div class="ex-sets">2 sets × 12 reps each side</div>
+      <div class="ex-note">Hold a wall or chair for balance. Slowly lift one leg out to the side, keeping it straight. Lower with control. Small range is fine.</div>
+      <div class="ex-mod">🦋 Always use support — no single-leg balance work unsupported</div>
+    </div>
+    <div class="exercise-card">
+      <div class="ex-name">Seated calf raise</div>
+      <div class="ex-sets">2 sets × 15 reps</div>
+      <div class="ex-note">Seated in a chair, dumbbell on thighs. Rise up onto toes, lower slowly. Simple but effective for lower leg strength.</div>
+    </div>
+  </div>
+
+  <div class="phase-content" data-screen="strength" data-phase="c">
+    <div class="content-block" style="margin-bottom:8px"><h3>Day C — Upper pull + full body</h3><p style="font-size:13px">Friday or equivalent.</p></div>
+    <div class="exercise-card">
+      <div class="ex-name">Dumbbell bent-over row</div>
+      <div class="ex-sets">3 sets × 10–12 reps</div>
+      <div class="ex-note">Hinge at hips, back flat, dumbbells hanging. Pull elbows back toward hips. Squeeze at top. This is your most important upper back exercise.</div>
+    </div>
+    <div class="exercise-card">
+      <div class="ex-name">Dumbbell bicep curl</div>
+      <div class="ex-sets">2 sets × 12 reps</div>
+      <div class="ex-note">Alternating arms. Don't swing — let the bicep do the work.</div>
+    </div>
+    <div class="exercise-card">
+      <div class="ex-name">Dumbbell Romanian deadlift</div>
+      <div class="ex-sets">3 sets × 10 reps</div>
+      <div class="ex-note">Standing, dumbbells in front of thighs. Hinge at hips with soft knees, lower weights down your legs until you feel hamstring stretch. Drive hips forward to return.</div>
+      <div class="ex-mod">🦋 Stop if you feel hip impingement. Shallow range is fine to start.</div>
+    </div>
+    <div class="exercise-card">
+      <div class="ex-name">Dumbbell lateral raise</div>
+      <div class="ex-sets">2 sets × 12 reps</div>
+      <div class="ex-note">Light weight. Arms slightly bent, raise to shoulder height, lower slowly. Slow descent is where the work happens.</div>
+    </div>
+    <div class="exercise-card">
+      <div class="ex-name">Plank (modified or full)</div>
+      <div class="ex-sets">3 sets × 20–40 seconds</div>
+      <div class="ex-note">On forearms or hands. Modified (knees down) is completely fine — focus on form over duration. Hips level, core braced.</div>
+      <div class="ex-mod">🦋 No pressure on hip flexors in forearm plank position</div>
+    </div>
+  </div>
+
+  <div class="phase-content" data-screen="strength" data-phase="notes">
+    <div class="content-block">
+      <h3>Hip labrum rules</h3>
+      <ul>
+        <li>No deep squatting past 90° hip flexion</li>
+        <li>No single-leg work without holding support</li>
+        <li>No high-impact (jumping, running) until cleared by physio</li>
+        <li>Stop any exercise that causes groin pinching or hip pain</li>
+        <li>Shallow range of motion on all lower body work is fine</li>
+      </ul>
+    </div>
+    <div class="content-block">
+      <h3>Progressive overload (how to get stronger)</h3>
+      <p>Each week, try to do one of: add 1–2 reps, slow the tempo, or increase weight slightly. Don't change all three at once. Small consistent increases over weeks build real strength.</p>
+    </div>
+    <div class="content-block">
+      <h3>Why this matters for perimenopause</h3>
+      <p>Strength training is the most evidence-based intervention for perimenopausal weight management. It builds muscle (your metabolic engine), improves insulin sensitivity, and supports bone density — all of which decline as estrogen drops. 3 days/week is enough to see real change.</p>
+    </div>
+    <div class="content-block">
+      <h3>The IFS connection</h3>
+      <p>The bee wanted to move freely and lightly. Every workout is a small act of keeping that promise. You don't have to be good at it. You just have to show up.</p>
+    </div>
+    <div class="connection-pill" onclick="goto('alcohol')">↗ IFS — letting the bee out</div>
+  </div>
+</div>
+
+<!-- SCIENCE -->
+<div class="screen" id="screen-science">
+  <div class="science-section">
+    <h3>Why weight gain happens</h3>
+    <div class="content-block">
+      <p>Estrogen has a direct protective effect on body composition. As it drops in perimenopause, fat redistribution shifts toward the abdomen. This is hormonally driven — not a diet failure, not laziness.</p>
+      <p>Simultaneously, muscle mass declines faster after 40 (sarcopenia). Less muscle means a lower resting metabolic rate — you burn fewer calories doing the same things. This creates the "nothing changed but weight is going up" experience.</p>
+      <p>Cortisol — the stress hormone — becomes more dominant as estrogen declines. Cortisol specifically deposits fat in the abdominal region. Alcohol, poor sleep, and chronic stress all raise cortisol.</p>
+    </div>
+  </div>
+  <div class="science-section">
+    <h3>What hormones are doing</h3>
+    <div class="content-block">
+      <div class="goal-row"><span class="goal-label">Estrogen</span><span class="goal-val" style="font-size:12px">Declining, fluctuating</span></div>
+      <p style="font-size:13px;color:var(--text-2);padding:6px 0 10px">Controls fat distribution, insulin sensitivity, bone density, sleep quality, mood. As it drops, all of these shift.</p>
+      <div class="goal-row"><span class="goal-label">Progesterone</span><span class="goal-val" style="font-size:12px">Declining first</span></div>
+      <p style="font-size:13px;color:var(--text-2);padding:6px 0 10px">The calming hormone. As it drops, anxiety, restlessness, and sleep disruption increase. This is likely part of what the drinking part has been managing.</p>
+      <div class="goal-row"><span class="goal-label">Cortisol</span><span class="goal-val" style="font-size:12px">Elevated</span></div>
+      <p style="font-size:13px;color:var(--text-2);padding:6px 0 10px">Stress response is amplified. Abdominal fat deposits increase. Alcohol, poor sleep, and unmanaged stress all raise it further.</p>
+      <div class="goal-row"><span class="goal-label">Insulin</span><span class="goal-val" style="font-size:12px">Less sensitive</span></div>
+      <p style="font-size:13px;color:var(--text-2);padding:6px 0">Cells are slower to take up glucose. Blood sugar spikes more easily. Eating protein before carbs at every meal helps significantly.</p>
+    </div>
+  </div>
+  <div class="science-section">
+    <h3>What actually moves the needle</h3>
+    <div class="content-block">
+      <ul>
+        <li><strong>Strength training</strong> — rebuilds metabolic tissue, improves insulin sensitivity, supports bone density</li>
+        <li><strong>Protein 100–130g/day</strong> — protects muscle mass, most evidence-backed dietary change</li>
+        <li><strong>Alcohol reduction</strong> — removes the cortisol driver, restores sleep architecture, removes empty calories displacing protein</li>
+        <li><strong>Sleep quality</strong> — hunger hormones (leptin/ghrelin) normalize with better sleep. Bad sleep makes you hungrier and store more fat.</li>
+        <li><strong>Stress management</strong> — directly lowers cortisol and abdominal fat deposition</li>
+        <li><strong>HRT (discuss with GP)</strong> — for many women, hormone replacement is the most direct intervention. Worth a full conversation with your doctor.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="connection-pill" onclick="goto('doctor')">↗ Questions to ask your GP about HRT</div>
+  <div class="connection-pill" onclick="goto('nutrition')">↗ Nutrition framework</div>
+</div>
+
+<!-- DOCTOR PREP -->
+<div class="screen" id="screen-doctor">
+  <div class="insight-box"><p>Take this into your next GP appointment. You don't need to ask all of these — prioritize the ones most relevant to where you are right now.</p></div>
+
+  <div class="content-block">
+    <h3>On weight and metabolism</h3>
+    <div class="doctor-q">
+      <div class="doctor-q-text">"My weight has been increasing despite no significant diet changes. Can we talk about what's driving this hormonally and what interventions make sense?"</div>
+      <div class="doctor-q-why">Opens the conversation without framing it as a diet failure.</div>
+    </div>
+    <div class="doctor-q">
+      <div class="doctor-q-text">"Can we check my fasting insulin and blood glucose alongside standard labs? I want to understand my insulin sensitivity."</div>
+      <div class="doctor-q-why">Standard panels often miss insulin resistance, which is common in perimenopause.</div>
+    </div>
+    <div class="doctor-q">
+      <div class="doctor-q-text">"Can we check my thyroid (TSH, free T3, free T4)? Thyroid issues are common in perimenopause and can drive weight gain."</div>
+      <div class="doctor-q-why">Often not checked unless you ask.</div>
+    </div>
+  </div>
+
+  <div class="content-block">
+    <h3>On HRT</h3>
+    <div class="doctor-q">
+      <div class="doctor-q-text">"I'd like to discuss whether HRT is appropriate for me. Can you walk me through the current evidence and my personal risk profile?"</div>
+      <div class="doctor-q-why">The evidence on HRT has evolved significantly. You're entitled to an informed conversation.</div>
+    </div>
+    <div class="doctor-q">
+      <div class="doctor-q-text">"If HRT is an option, what type would you recommend — estrogen only, combined, or transdermal? What are the differences?"</div>
+      <div class="doctor-q-why">Transdermal (patch or gel) has a different risk profile than oral. Worth understanding.</div>
+    </div>
+    <div class="doctor-q">
+      <div class="doctor-q-text">"What would we monitor if I started HRT, and what would be the signs it's working or not working?"</div>
+      <div class="doctor-q-why">Sets up an evaluation framework so you're not just waiting and hoping.</div>
+    </div>
+  </div>
+
+  <div class="content-block">
+    <h3>On labs to request</h3>
+    <div class="goal-row"><span class="goal-label">FSH / LH</span><span class="goal-val" style="font-size:12px">Confirms perimenopause stage</span></div>
+    <div class="goal-row"><span class="goal-label">Estradiol</span><span class="goal-val" style="font-size:12px">Current estrogen level</span></div>
+    <div class="goal-row"><span class="goal-label">TSH, free T3, T4</span><span class="goal-val" style="font-size:12px">Thyroid function</span></div>
+    <div class="goal-row"><span class="goal-label">Fasting insulin + glucose</span><span class="goal-val" style="font-size:12px">Insulin sensitivity</span></div>
+    <div class="goal-row"><span class="goal-label">Vitamin D</span><span class="goal-val" style="font-size:12px">Often low, affects mood + weight</span></div>
+    <div class="goal-row"><span class="goal-label">Full lipid panel</span><span class="goal-val" style="font-size:12px">Cardiovascular risk changes in perimenopause</span></div>
+  </div>
+</div>
+
+<!-- WEEKLY CHECK-IN -->
+<div class="screen" id="screen-checkin">
+  <div class="insight-box"><p>Takes about 5 minutes. Do this every Sunday, or whenever feels right. It's not a report — it's a conversation with yourself.</p></div>
+
+  <div class="checkin-form">
+    <label>Drinks this week (total)</label>
+    <div class="range-row">
+      <input type="range" min="0" max="14" value="7" id="drinksRange" oninput="document.getElementById('drinksVal').textContent=this.value; saveCheckin()">
+      <div class="range-val" id="drinksVal">7</div>
+    </div>
+
+    <label>Strength workouts completed</label>
+    <div class="range-row">
+      <input type="range" min="0" max="3" value="0" id="workoutsRange" oninput="document.getElementById('workoutsVal').textContent=this.value; saveCheckin()">
+      <div class="range-val" id="workoutsVal">0</div>
+    </div>
+
+    <label>Protein — how consistent were you?</label>
+    <select id="proteinSelect" onchange="saveCheckin()">
+      <option value="">Select...</option>
+      <option>Hit 100g+ most days</option>
+      <option>Hit it some days, missed others</option>
+      <option>Struggled — under 80g most days</option>
+    </select>
+
+    <label>Sleep quality this week</label>
+    <select id="sleepSelect" onchange="saveCheckin()">
+      <option value="">Select...</option>
+      <option>Better than usual</option>
+      <option>About the same</option>
+      <option>Worse than usual</option>
+    </select>
+
+    <label>IFS — what came up at 4:30pm this week?</label>
+    <textarea id="ifsNote" placeholder="What did the drinking part say? What was it carrying? What replacement did you try?" oninput="saveCheckin()"></textarea>
+
+    <label>Movement — did you let the bee out?</label>
+    <textarea id="movementNote" placeholder="Any moments of free movement — walking, dancing, stretching — even small ones?" oninput="saveCheckin()"></textarea>
+
+    <label>What needs attention next week?</label>
+    <textarea id="nextNote" placeholder="One thing to focus on..." oninput="saveCheckin()"></textarea>
+  </div>
+
+  <div class="content-block" id="historyBlock" style="display:none">
+    <h3>Last check-in</h3>
+    <div id="historyContent"></div>
+  </div>
+
+  <button class="btn btn-sage" onclick="clearCheckin()">Start fresh next week</button>
+</div>
+
+<script>
+var currentScreen = 'home';
+var screenHistory = [];
+
+function goto(screen) {
+  screenHistory.push(currentScreen);
+  document.getElementById('screen-' + currentScreen).classList.remove('active');
+  document.getElementById('screen-' + screen).classList.add('active');
+  currentScreen = screen;
+  updateNav();
+  window.scrollTo(0, 0);
+}
+
+function goBack() {
+  if (screenHistory.length === 0) return;
+  document.getElementById('screen-' + currentScreen).classList.remove('active');
+  var prev = screenHistory.pop();
+  document.getElementById('screen-' + prev).classList.add('active');
+  currentScreen = prev;
+  updateNav();
+  window.scrollTo(0, 0);
+}
+
+function updateNav() {
+  var titles = {
+    home: 'My Program',
+    alcohol: 'Alcohol + IFS',
+    nutrition: 'Nutrition',
+    strength: 'Strength',
+    science: 'The science',
+    doctor: 'Doctor prep',
+    checkin: 'Weekly check-in'
+  };
+  document.getElementById('navTitle').textContent = titles[currentScreen] || 'My Program';
+  document.getElementById('navBack').style.display = currentScreen === 'home' ? 'none' : 'block';
+  document.getElementById('navSub').style.display = currentScreen === 'home' ? 'block' : 'none';
+}
+
+function showPhase(screen, phase) {
+  var panels = document.querySelectorAll('[data-screen="' + screen + '"]');
+  panels.forEach(function(p) { p.classList.remove('active'); });
+  var tabs = document.querySelectorAll('#screen-' + screen + ' .phase-tab');
+  tabs.forEach(function(t) { t.classList.remove('active'); });
+  var target = document.querySelector('[data-screen="' + screen + '"][data-phase="' + phase + '"]');
+  if (target) target.classList.add('active');
+  event.target.classList.add('active');
+}
+
+function saveCheckin() {
+  try {
+    var data = {
+      drinks: document.getElementById('drinksRange').value,
+      workouts: document.getElementById('workoutsRange').value,
+      protein: document.getElementById('proteinSelect').value,
+      sleep: document.getElementById('sleepSelect').value,
+      ifs: document.getElementById('ifsNote').value,
+      movement: document.getElementById('movementNote').value,
+      next: document.getElementById('nextNote').value,
+      date: new Date().toLocaleDateString('en-CA')
+    };
+    localStorage.setItem('periProgram_checkin', JSON.stringify(data));
+    updateStats(data);
+  } catch(e) {}
+}
+
+function updateStats(data) {
+  if (data.drinks !== undefined) document.getElementById('stat-drinks').textContent = data.drinks;
+  if (data.workouts !== undefined) document.getElementById('stat-workouts').textContent = data.workouts + '/3';
+  var proteinMap = {'Hit 100g+ most days': '100+', 'Hit it some days, missed others': '~80', 'Struggled — under 80g most days': '<80'};
+  if (data.protein) document.getElementById('stat-protein').textContent = proteinMap[data.protein] || '—';
+}
+
+function clearCheckin() {
+  try {
+    var current = localStorage.getItem('periProgram_checkin');
+    if (current) localStorage.setItem('periProgram_checkin_last', current);
+    localStorage.removeItem('periProgram_checkin');
+  } catch(e) {}
+  document.getElementById('drinksRange').value = 7;
+  document.getElementById('drinksVal').textContent = 7;
+  document.getElementById('workoutsRange').value = 0;
+  document.getElementById('workoutsVal').textContent = 0;
+  document.getElementById('proteinSelect').value = '';
+  document.getElementById('sleepSelect').value = '';
+  document.getElementById('ifsNote').value = '';
+  document.getElementById('movementNote').value = '';
+  document.getElementById('nextNote').value = '';
+  document.getElementById('stat-drinks').textContent = '—';
+  document.getElementById('stat-workouts').textContent = '—';
+  document.getElementById('stat-protein').textContent = '—';
+  loadLastCheckin();
+}
+
+function loadLastCheckin() {
+  try {
+    var last = localStorage.getItem('periProgram_checkin_last');
+    if (last) {
+      var d = JSON.parse(last);
+      var block = document.getElementById('historyBlock');
+      var content = document.getElementById('historyContent');
+      block.style.display = 'block';
+      content.innerHTML = '<p style="font-size:12px;color:var(--text-3);margin-bottom:8px">' + (d.date || '') + '</p>' +
+        '<div class="goal-row"><span class="goal-label">Drinks</span><span class="goal-val">' + d.drinks + '</span></div>' +
+        '<div class="goal-row"><span class="goal-label">Workouts</span><span class="goal-val">' + d.workouts + '/3</span></div>' +
+        (d.protein ? '<div class="goal-row"><span class="goal-label">Protein</span><span class="goal-val" style="font-size:12px">' + d.protein + '</span></div>' : '') +
+        (d.ifs ? '<p style="font-size:13px;color:var(--text-2);margin-top:10px;line-height:1.5"><strong>IFS:</strong> ' + d.ifs + '</p>' : '') +
+        (d.next ? '<p style="font-size:13px;color:var(--text-2);margin-top:6px;line-height:1.5"><strong>Focus:</strong> ' + d.next + '</p>' : '');
+    }
+  } catch(e) {}
+}
+
+function loadSavedCheckin() {
+  try {
+    var saved = localStorage.getItem('periProgram_checkin');
+    if (saved) {
+      var d = JSON.parse(saved);
+      if (d.drinks !== undefined) { document.getElementById('drinksRange').value = d.drinks; document.getElementById('drinksVal').textContent = d.drinks; }
+      if (d.workouts !== undefined) { document.getElementById('workoutsRange').value = d.workouts; document.getElementById('workoutsVal').textContent = d.workouts; }
+      if (d.protein) document.getElementById('proteinSelect').value = d.protein;
+      if (d.sleep) document.getElementById('sleepSelect').value = d.sleep;
+      if (d.ifs) document.getElementById('ifsNote').value = d.ifs;
+      if (d.movement) document.getElementById('movementNote').value = d.movement;
+      if (d.next) document.getElementById('nextNote').value = d.next;
+      updateStats(d);
+    }
+    loadLastCheckin();
+  } catch(e) {}
+}
+
+loadSavedCheckin();
+</script>
+</body>
+</html>
